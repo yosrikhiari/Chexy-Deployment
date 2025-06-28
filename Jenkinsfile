@@ -1,11 +1,19 @@
 pipeline {
   agent any
   environment {
-    REGISTRY = 'yosrikhiari'
-    REGISTRY_CREDENTIAL = 'REDACTED'  // Jenkins credential ID for Docker Hub
-    KUBE_CONFIG = '/config'  // Updated path to kubeconfig inside container
+    DOTENV_PATH = '.env'
   }
   stages {
+    stage('Load Environment Variables') {
+      steps {
+        script {
+          def props = readProperties file: "${DOTENV_PATH}"
+          env.REGISTRY = props['REGISTRY']
+          env.REGISTRY_CREDENTIAL = props['REGISTRY_CREDENTIAL']
+          env.KUBE_CONFIG = props['KUBE_CONFIG']
+        }
+      }
+    }
     stage('Clone Repositories') {
       steps {
         git url: 'https://github.com/yosrikhiari/Chexy-B.git', branch: 'main'
