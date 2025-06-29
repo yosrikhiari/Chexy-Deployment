@@ -7,7 +7,7 @@ pipeline {
     stage('Load Environment Variables') {
       steps {
         script {
-          def props = readProperties file: "${DOTENV_PATH}"  // Reads .env file
+          def props = readProperties file: "/home/yosri/Documents/Projects/Chexy/Chexy-Deployment/.env"  // Reads .env file
           env.REGISTRY = props['REGISTRY']
           env.REGISTRY_CREDENTIAL = props['REGISTRY_CREDENTIAL']
           env.KUBE_CONFIG = props['KUBE_CONFIG']
