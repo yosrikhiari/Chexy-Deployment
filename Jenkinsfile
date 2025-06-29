@@ -7,30 +7,15 @@ pipeline {
     stage('Load Environment Variables') {
       steps {
         script {
-          // Use absolute path and add error handling
-          def envFile = "/home/yosri/Documents/Projects/Chexy/Chexy-Deployment/.env"
-
-          if (!fileExists(envFile)) {
-            error("Environment file not found at: ${envFile}")
-          }
-
-          def props = readProperties file: envFile
-
-          // Validate required properties exist
-          def requiredProps = ['REGISTRY', 'REGISTRY_CREDENTIAL', 'KUBE_CONFIG']
-          for (prop in requiredProps) {
-            if (!props[prop]) {
-              error("Required property '${prop}' not found in .env file")
-            }
-          }
-
+          // Use relative path since Jenkins runs from the workspace
+          def props = readProperties file: "${WORKSPACE}/.env"
           env.REGISTRY = props['REGISTRY']
           env.REGISTRY_CREDENTIAL = props['REGISTRY_CREDENTIAL']
           env.KUBE_CONFIG = props['KUBE_CONFIG']
 
-          // Debug output (remove in production)
-          echo "Loaded REGISTRY: ${env.REGISTRY}"
-          echo "Loaded KUBE_CONFIG: ${env.KUBE_CONFIG}"
+          // Debug: Print loaded values (remove in production)
+          echo "Registry: ${env.REGISTRY}"
+          echo "Kube Config: ${env.KUBE_CONFIG}"
         }
       }
     }
@@ -56,10 +41,12 @@ pipeline {
             [name: 'backend', path: 'Chexy-B/backend', image: "${env.REGISTRY}/chexy-backend"],
             [name: 'frontend', path: 'Chexy-F/Chexy', image: "${env.REGISTRY}/chexy-frontend"]
           ]
+
           for (comp in components) {
             echo "Building image: ${comp.image}:${BUILD_NUMBER}"
             def image = docker.build("${comp.image}:${BUILD_NUMBER}", "-f ${comp.path}/Dockerfile ${comp.path}")
-            docker.withRegistry('', env.REGISTRY_CREDENTIAL) {
+
+            docker.withRegistry('https://registry-1.docker.io/v2/', env.REGISTRY_CREDENTIAL) {
               image.push("${BUILD_NUMBER}")
               image.push('latest')
             }
@@ -77,8 +64,10 @@ pipeline {
     stage('Deploy to Kubernetes') {
       steps {
         script {
+          // Apply the deployment.yaml from Chexy-Deployment
           sh "kubectl --kubeconfig=${env.KUBE_CONFIG} apply -f kubernetes/deployment.yaml"
 
+          // Update images with specific tags
           def components = ['ai-model', 'keycloak', 'backend', 'frontend']
           for (comp in components) {
             sh "kubectl --kubeconfig=${env.KUBE_CONFIG} set image deployment/chexy-${comp} chexy-${comp}=${env.REGISTRY}/chexy-${comp}:${BUILD_NUMBER} -n chexy"
