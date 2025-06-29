@@ -5,35 +5,31 @@ pipeline {
         REGISTRY = 'yosrikhiari'
         DOCKER_REGISTRY = 'https://index.docker.io/v1/'
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
-        KUBECONFIG = "${WORKSPACE}/kubeconfig"
+        KUBE_CONFIG = '/var/jenkins_home/.kube/config'
     }
 
     stages {
         stage('Setup Kubernetes Config') {
             steps {
                 script {
-                    // Create a corrected kubeconfig in the workspace
+                    // Fix the kubeconfig paths to point to the mounted directories
                     sh '''
-                        # Copy the original kubeconfig
-                        cp /var/jenkins_home/.kube/config ${WORKSPACE}/kubeconfig
+                        # Create a backup of the original config
+                        cp /var/jenkins_home/.kube/config /var/jenkins_home/.kube/config.backup
 
-                        # Update paths to point to the mounted directories
-                        sed -i 's|/home/yosri/.minikube/ca.crt|/var/jenkins_home/.minikube/ca.crt|g' ${WORKSPACE}/kubeconfig
-                        sed -i 's|/home/yosri/.minikube/profiles/minikube/client.crt|/var/jenkins_home/.minikube/profiles/minikube/client.crt|g' ${WORKSPACE}/kubeconfig
-                        sed -i 's|/home/yosri/.minikube/profiles/minikube/client.key|/var/jenkins_home/.minikube/profiles/minikube/client.key|g' ${WORKSPACE}/kubeconfig
+                        # Update paths in kubeconfig to point to Jenkins home
+                        sed -i 's|/home/yosri/.minikube/ca.crt|/var/jenkins_home/.minikube/ca.crt|g' /var/jenkins_home/.kube/config
+                        sed -i 's|/home/yosri/.minikube/profiles/minikube/client.crt|/var/jenkins_home/.minikube/profiles/minikube/client.crt|g' /var/jenkins_home/.kube/config
+                        sed -i 's|/home/yosri/.minikube/profiles/minikube/client.key|/var/jenkins_home/.minikube/profiles/minikube/client.key|g' /var/jenkins_home/.kube/config
 
-                        # Verify the certificate files exist
+                        # Verify the paths exist
                         echo "Checking certificate files:"
-                        ls -la /var/jenkins_home/.minikube/ca.crt || echo "ca.crt not found"
-                        ls -la /var/jenkins_home/.minikube/profiles/minikube/client.crt || echo "client.crt not found"
-                        ls -la /var/jenkins_home/.minikube/profiles/minikube/client.key || echo "client.key not found"
-
-                        # Show the corrected kubeconfig
-                        echo "Updated kubeconfig:"
-                        cat ${WORKSPACE}/kubeconfig
+                        ls -la /var/jenkins_home/.minikube/ca.crt
+                        ls -la /var/jenkins_home/.minikube/profiles/minikube/client.crt
+                        ls -la /var/jenkins_home/.minikube/profiles/minikube/client.key
 
                         # Test kubectl connection
-                        kubectl --kubeconfig=${WORKSPACE}/kubeconfig cluster-info
+                        kubectl --kubeconfig=/var/jenkins_home/.kube/config cluster-info
                     '''
                 }
             }
@@ -123,10 +119,10 @@ pipeline {
                         echo "Warning: realm-export.json not found, skipping ConfigMap creation"
                     } else {
                         sh """
-                            kubectl --kubeconfig=${KUBECONFIG} create configmap realm-export \
+                            kubectl --kubeconfig=${KUBE_CONFIG} create configmap realm-export \
                                 --from-file=Chexy-B/keycloak/realm-export.json \
                                 -n chexy --dry-run=client -o yaml | \
-                            kubectl --kubeconfig=${KUBECONFIG} apply -f -
+                            kubectl --kubeconfig=${KUBE_CONFIG} apply -f -
                         """
                     }
                 }
@@ -140,12 +136,12 @@ pipeline {
                         error("Kubernetes deployment file not found: kubernetes/deployment.yaml")
                     }
 
-                    sh "kubectl --kubeconfig=${KUBECONFIG} apply -f kubernetes/deployment.yaml"
+                    sh "kubectl --kubeconfig=${KUBE_CONFIG} apply -f kubernetes/deployment.yaml"
 
                     def components = ['ai-model', 'keycloak', 'backend', 'frontend']
                     for (comp in components) {
                         sh """
-                            kubectl --kubeconfig=${KUBECONFIG} set image \
+                            kubectl --kubeconfig=${KUBE_CONFIG} set image \
                                 deployment/chexy-${comp} \
                                 chexy-${comp}=${REGISTRY}/chexy-${comp}:${BUILD_NUMBER} \
                                 -n chexy
@@ -154,7 +150,7 @@ pipeline {
 
                     for (comp in components) {
                         sh """
-                            kubectl --kubeconfig=${KUBECONFIG} rollout status \
+                            kubectl --kubeconfig=${KUBE_CONFIG} rollout status \
                                 deployment/chexy-${comp} -n chexy --timeout=300s
                         """
                     }
@@ -179,10 +175,6 @@ pipeline {
             script {
                 sh "pwd && ls -la"
                 sh "docker images | grep chexy || true"
-                // Debug kubectl configuration
-                sh "echo 'Debugging kubectl config:'"
-                sh "ls -la /var/jenkins_home/.kube/ || true"
-                sh "ls -la /var/jenkins_home/.minikube/ || true"
             }
         }
         success {
