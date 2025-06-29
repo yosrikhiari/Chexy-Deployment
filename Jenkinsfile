@@ -4,13 +4,20 @@ pipeline {
     DOTENV_PATH = '.env'
   }
   stages {
+
     stage('Load Environment Variables') {
       steps {
         script {
-          def props = readProperties file: "/home/yosri/Documents/Projects/Chexy/Chexy-Deployment/.env"  // Reads .env file
+          // Use relative path since .env is in the same repo as Jenkinsfile
+          def props = readProperties file: '.env'
           env.REGISTRY = props['REGISTRY']
           env.REGISTRY_CREDENTIAL = props['REGISTRY_CREDENTIAL']
           env.KUBE_CONFIG = props['KUBE_CONFIG']
+
+          // Debug: Print the loaded values (remove in production)
+          echo "REGISTRY: ${env.REGISTRY}"
+          echo "REGISTRY_CREDENTIAL: ${env.REGISTRY_CREDENTIAL}"
+          echo "KUBE_CONFIG: ${env.KUBE_CONFIG}"
         }
       }
     }
