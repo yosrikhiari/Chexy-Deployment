@@ -25,7 +25,7 @@ data:
   KC_HEALTH_ENABLED: "true"
   KC_HOSTNAME_STRICT_HTTPS: "false"
   KC_LOG_LEVEL: "INFO"
-  KC_CACHE: "ispn"
+  KC_CACHE: "local"
   KC_CACHE_STACK: "tcp"
   KC_BOOTSTRAP_ADMIN_USERNAME: "chessnewadmin"
   SPRING_PROFILES_ACTIVE: "docker"

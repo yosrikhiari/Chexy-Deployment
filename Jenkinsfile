@@ -7,7 +7,7 @@ pipeline {
     stage('Load Environment Variables') {
       steps {
         script {
-          def props = readProperties file: "${DOTENV_PATH}"
+          def props = readProperties file: "${DOTENV_PATH}"  // Reads .env file
           env.REGISTRY = props['REGISTRY']
           env.REGISTRY_CREDENTIAL = props['REGISTRY_CREDENTIAL']
           env.KUBE_CONFIG = props['KUBE_CONFIG']
@@ -16,7 +16,9 @@ pipeline {
     }
     stage('Clone Repositories') {
       steps {
-        git url: 'https://github.com/yosrikhiari/Chexy-B.git', branch: 'main'
+        dir('Chexy-B') {
+          git url: 'https://github.com/yosrikhiari/Chexy-B.git', branch: 'main'
+        }
         dir('Chexy-F') {
           git url: 'https://github.com/yosrikhiari/Chexy-F.git', branch: 'main'
         }
@@ -54,7 +56,7 @@ pipeline {
     stage('Deploy to Kubernetes') {
       steps {
         script {
-          // Apply the deployment.yaml first (adjust path if needed)
+          // Apply the deployment.yaml from Chexy-Deployment
           sh "kubectl --kubeconfig=${KUBE_CONFIG} apply -f kubernetes/deployment.yaml"
           
           // Update images with specific tags
