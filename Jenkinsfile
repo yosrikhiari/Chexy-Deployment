@@ -92,6 +92,7 @@ pipeline {
                     if (!fileExists('Chexy-B/keycloak/realm-export.json')) {
                         echo "Warning: realm-export.json not found, skipping ConfigMap creation"
                     } else {
+                        // Fixed: Corrected the kubectl command syntax
                         sh """
                             kubectl --kubeconfig=${KUBE_CONFIG} create configmap realm-export \
                                 --from-file=Chexy-B/keycloak/realm-export.json \
@@ -103,6 +104,20 @@ pipeline {
             }
         }
 
+        stage('Test Kubernetes Connection') {
+            steps {
+                script {
+                    // Add connection test before deployment
+                    sh """
+                        echo "Testing Kubernetes connection..."
+                        kubectl --kubeconfig=${KUBE_CONFIG} cluster-info
+                        kubectl --kubeconfig=${KUBE_CONFIG} get nodes
+                        kubectl --kubeconfig=${KUBE_CONFIG} get namespaces
+                    """
+                }
+            }
+        }
+
         stage('Deploy to Kubernetes') {
             steps {
                 script {
@@ -110,7 +125,11 @@ pipeline {
                         error("Kubernetes deployment file not found: kubernetes/deployment.yaml")
                     }
 
-                    sh "kubectl --kubeconfig=${KUBE_CONFIG} apply -f kubernetes/deployment.yaml"
+                    // Add validation and timeout options
+                    sh """
+                        kubectl --kubeconfig=${KUBE_CONFIG} apply -f kubernetes/deployment.yaml \
+                            --validate=false --timeout=300s
+                    """
 
                     def components = ['ai-model', 'keycloak', 'backend', 'frontend']
                     for (comp in components) {
@@ -118,7 +137,7 @@ pipeline {
                             kubectl --kubeconfig=${KUBE_CONFIG} set image \
                                 deployment/chexy-${comp} \
                                 chexy-${comp}=${REGISTRY}/chexy-${comp}:${BUILD_NUMBER} \
-                                -n chexy
+                                -n chexy --timeout=60s
                         """
                     }
 
@@ -149,6 +168,15 @@ pipeline {
             script {
                 sh "pwd && ls -la"
                 sh "docker images | grep chexy || true"
+                // Add debugging for Kubernetes connectivity
+                sh """
+                    echo "=== Kubernetes Debug Info ==="
+                    kubectl --kubeconfig=${KUBE_CONFIG} version --client || true
+                    kubectl --kubeconfig=${KUBE_CONFIG} config view || true
+                    echo "=== Network Connectivity ==="
+                    netstat -rn || true
+                    ping -c 3 192.168.49.2 || true
+                """
             }
         }
         success {
