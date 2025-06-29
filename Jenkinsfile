@@ -9,6 +9,32 @@ pipeline {
     }
 
     stages {
+        stage('Setup Kubernetes Config') {
+            steps {
+                script {
+                    // Fix the kubeconfig paths to point to the mounted directories
+                    sh '''
+                        # Create a backup of the original config
+                        cp /var/jenkins_home/.kube/config /var/jenkins_home/.kube/config.backup
+
+                        # Update paths in kubeconfig to point to Jenkins home
+                        sed -i 's|/home/yosri/.minikube/ca.crt|/var/jenkins_home/.minikube/ca.crt|g' /var/jenkins_home/.kube/config
+                        sed -i 's|/home/yosri/.minikube/profiles/minikube/client.crt|/var/jenkins_home/.minikube/profiles/minikube/client.crt|g' /var/jenkins_home/.kube/config
+                        sed -i 's|/home/yosri/.minikube/profiles/minikube/client.key|/var/jenkins_home/.minikube/profiles/minikube/client.key|g' /var/jenkins_home/.kube/config
+
+                        # Verify the paths exist
+                        echo "Checking certificate files:"
+                        ls -la /var/jenkins_home/.minikube/ca.crt
+                        ls -la /var/jenkins_home/.minikube/profiles/minikube/client.crt
+                        ls -la /var/jenkins_home/.minikube/profiles/minikube/client.key
+
+                        # Test kubectl connection
+                        kubectl --kubeconfig=/var/jenkins_home/.kube/config cluster-info
+                    '''
+                }
+            }
+        }
+
         stage('Clone Repositories') {
             parallel {
                 stage('Clone Chexy-B') {
