@@ -5,35 +5,44 @@ pipeline {
         REGISTRY = 'yosrikhiari'
         DOCKER_REGISTRY = 'https://index.docker.io/v1/'
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
+        GITHUB_CREDENTIALS_ID = 'github-credentials'
         KUBE_CONFIG = '/var/jenkins_home/.kube/config-adjusted'
         // For kubectl apply commands only
         KUBECTL_APPLY_FLAGS = '--validate=false'
     }
 
-    stages {
         stage('Clone Repositories') {
             parallel {
                 stage('Clone Chexy-B') {
                     steps {
                         dir('Chexy-B') {
-                            git branch: 'main',
-                                url: 'https://github.com/yosrikhiari/Chexy-B.git'
+                            checkout([$class: 'GitSCM',
+                                      branches: [[name: '*/main']],
+                                      extensions: [],
+                                      userRemoteConfigs: [[url: 'https://github.com/yosrikhiari/Chexy-B.git',
+                                                           credentialsId: 'github-credentials']]])
                         }
                     }
                 }
                 stage('Clone Chexy-F') {
                     steps {
                         dir('Chexy-F') {
-                            git branch: 'main',
-                                url: 'https://github.com/yosrikhiari/Chexy-F.git'
+                            checkout([$class: 'GitSCM',
+                                      branches: [[name: '*/main']],
+                                      extensions: [],
+                                      userRemoteConfigs: [[url: 'https://github.com/yosrikhiari/Chexy-F.git',
+                                                           credentialsId: 'github-credentials']]])
                         }
                     }
                 }
                 stage('Clone Chexy-M') {
                     steps {
                         dir('Chexy-M') {
-                            git branch: 'main',
-                                url: 'https://github.com/yosrikhiari/Chexy-M.git'
+                            checkout([$class: 'GitSCM',
+                                      branches: [[name: '*/main']],
+                                      extensions: [],
+                                      userRemoteConfigs: [[url: 'https://github.com/yosrikhiari/Chexy-M.git',
+                                                           credentialsId: 'github-credentials']]])
                         }
                     }
                 }
