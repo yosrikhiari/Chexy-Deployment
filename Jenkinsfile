@@ -11,38 +11,30 @@ pipeline {
         KUBECTL_APPLY_FLAGS = '--validate=false'
     }
 
+    stages {
         stage('Clone Repositories') {
             parallel {
                 stage('Clone Chexy-B') {
                     steps {
                         dir('Chexy-B') {
-                            checkout([$class: 'GitSCM',
-                                      branches: [[name: '*/main']],
-                                      extensions: [],
-                                      userRemoteConfigs: [[url: 'https://github.com/yosrikhiari/Chexy-B.git',
-                                                           credentialsId: 'github-credentials']]])
+                            git branch: 'main',
+                                url: 'https://github.com/yosrikhiari/Chexy-B.git'
                         }
                     }
                 }
                 stage('Clone Chexy-F') {
                     steps {
                         dir('Chexy-F') {
-                            checkout([$class: 'GitSCM',
-                                      branches: [[name: '*/main']],
-                                      extensions: [],
-                                      userRemoteConfigs: [[url: 'https://github.com/yosrikhiari/Chexy-F.git',
-                                                           credentialsId: 'github-credentials']]])
+                            git branch: 'main',
+                                url: 'https://github.com/yosrikhiari/Chexy-F.git'
                         }
                     }
                 }
                 stage('Clone Chexy-M') {
                     steps {
                         dir('Chexy-M') {
-                            checkout([$class: 'GitSCM',
-                                      branches: [[name: '*/main']],
-                                      extensions: [],
-                                      userRemoteConfigs: [[url: 'https://github.com/yosrikhiari/Chexy-M.git',
-                                                           credentialsId: 'github-credentials']]])
+                            git branch: 'main',
+                                url: 'https://github.com/yosrikhiari/Chexy-M.git'
                         }
                     }
                 }
