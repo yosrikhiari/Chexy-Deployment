@@ -13,30 +13,46 @@ pipeline {
 
     stages {
         stage('Clone Repositories') {
-            parallel {
-                stage('Clone Chexy-B') {
-                    steps {
-                        dir('Chexy-B') {
-                            git branch: 'main',
-                                url: 'https://github.com/yosrikhiari/Chexy-B.git'
-                        }
-                    }
-                }
-                stage('Clone Chexy-F') {
-                    steps {
-                        dir('Chexy-F') {
-                            git branch: 'main',
-                                url: 'https://github.com/yosrikhiari/Chexy-F.git'
-                        }
-                    }
-                }
-                stage('Clone Chexy-M') {
-                    steps {
-                        dir('Chexy-M') {
-                            git branch: 'main',
-                                url: 'https://github.com/yosrikhiari/Chexy-M.git'
-                        }
-                    }
+            steps {
+                script {
+                    // Checkout all repositories using SCM Git
+                    checkout scmGit(
+                        branches: [[name: '*/main']],
+                        extensions: [
+                            [$class: 'RelativeTargetDirectory', relativeTargetDir: 'Chexy-F'],
+                            [$class: 'CleanBeforeCheckout']
+                        ],
+                        userRemoteConfigs: [[
+                            credentialsId: 'github-credentials',
+                            url: 'https://github.com/yosrikhiari/Chexy-F'
+                        ]]
+                    )
+
+                    checkout scmGit(
+                        branches: [[name: '*/main']],
+                        extensions: [
+                            [$class: 'RelativeTargetDirectory', relativeTargetDir: 'Chexy-B'],
+                            [$class: 'CleanBeforeCheckout']
+                        ],
+                        userRemoteConfigs: [[
+                            credentialsId: 'github-credentials',
+                            url: 'https://github.com/yosrikhiari/Chexy-B'
+                        ]]
+                    )
+
+                    checkout scmGit(
+                        branches: [[name: '*/main']],
+                        extensions: [
+                            [$class: 'RelativeTargetDirectory', relativeTargetDir: 'Chexy-M'],
+                            [$class: 'CleanBeforeCheckout']
+                        ],
+                        userRemoteConfigs: [[
+                            credentialsId: 'github-credentials',
+                            url: 'https://github.com/yosrikhiari/Chexy-M'
+                        ]]
+                    )
+
+                    echo "✓ All repositories cloned successfully"
                 }
             }
         }
