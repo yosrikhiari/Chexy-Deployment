@@ -1,11 +1,11 @@
 pipeline {
-    agent any
+    agent { label 'built-in' }
 
     environment {
         REGISTRY = 'yosrikhiari'
         DOCKER_REGISTRY = 'https://index.docker.io/v1/'
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
-        KUBE_CONFIG = '/var/jenkins_home/.kube/config'
+        KUBE_CONFIG = '/var/jenkins_home/.kube/config-adjusted'
         // For kubectl apply commands only
         KUBECTL_APPLY_FLAGS = '--validate=false'
     }
