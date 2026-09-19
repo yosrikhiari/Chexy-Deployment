@@ -1,5 +1,7 @@
 # Chexy — Deployment
 
+> **Moved.** This repository is archived; it now lives at [`yosrikhiari/Chexy`](https://github.com/yosrikhiari/Chexy) in the `deploy/` folder, with full history.
+
 Kubernetes manifests and a Jenkins pipeline that build and deploy the whole **Chexy** stack.
 One of four repositories:
 
