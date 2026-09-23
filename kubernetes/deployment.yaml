@@ -35,20 +35,31 @@ data:
   STOCKFISH_PATH: "/usr/local/bin/stockfish"
 
 ---
-# Secret for sensitive data
+# Secret for sensitive data.
+#
+# Real values are NEVER committed. Create the secret out of band before
+# applying this file:
+#
+#   kubectl create secret generic chexy-secrets -n chexy #     --from-literal=POSTGRES_PASSWORD=... #     --from-literal=MONGO_INITDB_ROOT_PASSWORD=... #     --from-literal=KC_DB_PASSWORD=... #     --from-literal=KC_BOOTSTRAP_ADMIN_PASSWORD=... #     --from-literal=KEYCLOAK_CLIENT_SECRET=... #     --from-literal=GMAIL_PASSWORD=... #     --from-literal=HUGGINGFACE_TOKEN=...
+#
+# The stub below only declares the keys so `kubectl apply` on a fresh
+# cluster does not fail; it holds no credentials. Applying it after
+# creating the secret above would blank those values, so apply it first
+# (or skip it entirely and rely on the command).
 apiVersion: v1
 kind: Secret
 metadata:
   name: chexy-secrets
   namespace: chexy
 type: Opaque
-data:
-  POSTGRES_PASSWORD: a2V5Y2xvYWtfcGFzc3dvcmQ=  # keycloak_password
-  MONGO_INITDB_ROOT_PASSWORD: bW9uZ29fcGFzc3dvcmQ=  # mongo_password
-  KC_DB_PASSWORD: a2V5Y2xvYWtfcGFzc3dvcmQ=  # keycloak_password
-  KC_BOOTSTRAP_ADMIN_PASSWORD: YWRtaW4=  # admin
-  GMAIL_PASSWORD: emVsdGdzenZ5Z2xhc3RmYQ==  # zeltgszvyglastfa
-  HUGGINGFACE_TOKEN: ""  # Add your base64 encoded token here
+stringData:
+  POSTGRES_PASSWORD: ""
+  MONGO_INITDB_ROOT_PASSWORD: ""
+  KC_DB_PASSWORD: ""
+  KC_BOOTSTRAP_ADMIN_PASSWORD: ""
+  KEYCLOAK_CLIENT_SECRET: ""
+  GMAIL_PASSWORD: ""
+  HUGGINGFACE_TOKEN: ""
 
 ---
 # PostgreSQL PersistentVolume
